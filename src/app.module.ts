@@ -6,9 +6,10 @@ import { SyncModule } from './sync/sync.module';
 import { StripeModule } from './integrations/stripe/stripe.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { HubspotModule } from './integrations/hubspot/hubspot.module';
+import { GoogleCalendarModule } from './integrations/google-calendar/google-calendar.module';
 
 @Module({
-  imports: [PrismaModule, SyncModule, StripeModule, MetricsModule, HubspotModule],
+  imports: [PrismaModule, SyncModule, StripeModule, MetricsModule, HubspotModule, GoogleCalendarModule],
   controllers: [AppController],
   providers: [AppService],
 })
