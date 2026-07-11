@@ -47,12 +47,14 @@ export class AppService {
       )
     ]);
 
-    const status = results.map(r => r.status);
-    this.logger.log(`Sync operations completed. Statuses: ${JSON.stringify(status)}`);
+    const syncStatuses = results.map(r => 
+      r.status === 'fulfilled' ? r.value : { source: 'unknown', status: 'CRITICAL_ERROR', error: String(r.reason) }
+    );
+    this.logger.log(`Sync operations completed. Statuses: ${JSON.stringify(syncStatuses)}`);
     
     return {
       message: 'Sync operations completed',
-      results: status
+      results: syncStatuses
     };
   }
 }

@@ -63,10 +63,10 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 2rem;
       width: 100%;
-      max-width: 1200px;
+      max-width: 1400px;
     }
 
     .card {
@@ -250,6 +250,20 @@
       </div>
     </div>
 
+    <!-- Daily Breakdown Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Daily Breakdown</h2>
+        <p class="card-desc">Provides a day-by-day revenue breakdown using the exact same underlying logic to ensure both views always mathematically agree without drift.</p>
+      </div>
+      
+      <button id="btn-daily" onclick="fetchDailyMetrics()" style="background: #a855f7;">Fetch Daily Breakdown</button>
+      
+      <div id="daily-raw" class="result-container" style="min-height: 200px;">
+// Awaiting daily metrics fetch...
+      </div>
+    </div>
+
   </main>
 
   <script>
@@ -317,9 +331,37 @@
         btn.classList.remove('loading');
       }
     }
+
+    async function fetchDailyMetrics() {
+      const btn = document.getElementById('btn-daily');
+      const rawBox = document.getElementById('daily-raw');
+      
+      btn.classList.add('loading');
+      rawBox.textContent = 'Querying daily breakdown...';
+      rawBox.className = 'result-container';
+      
+      try {
+        const response = await fetch('/metrics/revenue/daily');
+        const data = await response.json();
+        
+        if (response.ok) {
+          rawBox.textContent = JSON.stringify(data, null, 2);
+          rawBox.classList.add('success');
+        } else {
+          rawBox.textContent = JSON.stringify(data, null, 2);
+          rawBox.classList.add('error');
+        }
+      } catch (err) {
+        rawBox.textContent = 'Network error: ' + err.message;
+        rawBox.classList.add('error');
+      } finally {
+        btn.classList.remove('loading');
+      }
+    }
     
     // Auto fetch metrics on load
     fetchMetrics();
+    fetchDailyMetrics();
   </script>
 </body>
 </html>

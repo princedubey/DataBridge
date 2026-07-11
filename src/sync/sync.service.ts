@@ -78,6 +78,7 @@ export class SyncService {
       });
 
       this.logger.log(`Sync completed for ${sourceName}. Processed ${recordsProcessed} records.`);
+      return { source: sourceName, status: 'SUCCESS', recordsProcessed };
     } catch (error: any) {
       this.logger.error(`Sync failed for ${sourceName}`, error.stack);
       
@@ -94,6 +95,8 @@ export class SyncService {
           errorMessage: error.message,
         },
       });
+
+      return { source: sourceName, status: 'FAILED', recordsProcessed, error: error.message };
     }
   }
 }
