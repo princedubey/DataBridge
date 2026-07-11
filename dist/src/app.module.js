@@ -14,12 +14,13 @@ const prisma_module_1 = require("./prisma/prisma.module");
 const sync_module_1 = require("./sync/sync.module");
 const stripe_module_1 = require("./integrations/stripe/stripe.module");
 const metrics_module_1 = require("./metrics/metrics.module");
+const hubspot_module_1 = require("./integrations/hubspot/hubspot.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, sync_module_1.SyncModule, stripe_module_1.StripeModule, metrics_module_1.MetricsModule],
+        imports: [prisma_module_1.PrismaModule, sync_module_1.SyncModule, stripe_module_1.StripeModule, metrics_module_1.MetricsModule, hubspot_module_1.HubspotModule],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })
