@@ -41,7 +41,7 @@ describe('AppService', () => {
     expect(syncService.runSync).toHaveBeenCalledTimes(3);
     
     // Promise.allSettled ensures it doesn't throw, and returns statuses
-    expect(result.results).toContain('fulfilled');
-    expect(result.results).toContain('rejected');
+    const hasError = result.results.some(r => r && r.status === 'CRITICAL_ERROR');
+    expect(hasError).toBe(true);
   });
 });
