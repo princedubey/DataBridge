@@ -29,9 +29,14 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "DataBridge API is running!"', () => {
-      expect(appController.getHello()).toBe('DataBridge API is running!');
+  describe('triggerSync', () => {
+    it('should call triggerAllSyncs', async () => {
+      // Mock the appService on the controller as we didn't export the module
+      const appService = (appController as any).appService;
+      const mockResult = { message: 'Sync operations completed', results: [] };
+      jest.spyOn(appService, 'triggerAllSyncs').mockResolvedValue(mockResult);
+
+      expect(await appController.triggerSync()).toBe(mockResult);
     });
   });
 });
