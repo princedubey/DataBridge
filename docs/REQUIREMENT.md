@@ -5,7 +5,7 @@
 **Document Version:** 1.0
 **Project Name:** DataBridge
 **Document Type:** Software Requirements Specification
-**Prepared By:** Engineering Team
+**Prepared By:** Prince Dubey [Sr. Software Engineer]
 **Purpose:** Backend Integration & Data Reliability Platform
 
 ---
