@@ -69,3 +69,7 @@ For deeper dives into the project's design and constraints, please review the fo
 *   [Stripe API Reference (Test Data Seeding)](https://stripe.com/docs/api)
 *   [HubSpot API Reference (OAuth & Private Apps)](https://developers.hubspot.com/docs/api/overview)
 *   [Google Calendar API Reference](https://developers.google.com/calendar/api/v3/reference)
+
+## 🤖 AI Usage
+This project was built with the assistance of an AI coding agent. The AI was directed to scaffold the NestJS architecture, implement the robust pipeline logic to handle edge cases (like 401s and cursor fallbacks), build the frontend dashboard, and debug deployment configuration for Render (e.g., overriding memory limits).
+*(Please find the exported chat history linked alongside this repo submission!)*
