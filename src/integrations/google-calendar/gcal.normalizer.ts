@@ -2,8 +2,13 @@ import { Normalizer } from '../../sync/interfaces/normalizer.interface';
 import { Event } from '@prisma/client';
 import { calendar_v3 } from 'googleapis';
 
-export class GcalNormalizer implements Normalizer<calendar_v3.Schema$Event, Omit<Event, 'id' | 'createdAt' | 'updatedAt'>> {
-  normalize(data: calendar_v3.Schema$Event): Omit<Event, 'id' | 'createdAt' | 'updatedAt'> {
+export class GcalNormalizer implements Normalizer<
+  calendar_v3.Schema$Event,
+  Omit<Event, 'id' | 'createdAt' | 'updatedAt'>
+> {
+  normalize(
+    data: calendar_v3.Schema$Event,
+  ): Omit<Event, 'id' | 'createdAt' | 'updatedAt'> {
     let startTime = new Date();
     let endTime: Date | null = null;
 

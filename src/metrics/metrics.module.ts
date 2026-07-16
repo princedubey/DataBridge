@@ -4,6 +4,6 @@ import { RevenueService } from './revenue.service';
 
 @Module({
   controllers: [RevenueController],
-  providers: [RevenueService]
+  providers: [RevenueService],
 })
 export class MetricsModule {}

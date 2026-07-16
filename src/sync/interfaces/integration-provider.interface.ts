@@ -13,7 +13,7 @@ export interface IntegrationProvider<T> {
   /**
    * Fetches data incrementally using the provided cursor.
    * If no cursor is provided, it should behave as a full sync (or fetch from the beginning).
-   * 
+   *
    * @param cursor The pagination cursor or timestamp from the last successful sync
    */
   fetchData(cursor?: string): Promise<SyncResult<T>>;

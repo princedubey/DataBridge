@@ -43,7 +43,7 @@ model Payment {
   id           String   @id @default(uuid())
   externalId   String   @unique
   customerName String?
-  amount       Int
+  amount       Int      // Stripe best practice: Stored in smallest currency unit (e.g., cents)
   currency     String
   status       String   // e.g., "COLLECTED"
   createdAt    DateTime @default(now())

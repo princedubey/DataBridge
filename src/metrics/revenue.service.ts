@@ -1,28 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+import { Prisma } from '@prisma/client';
+
 @Injectable()
 export class RevenueService {
   constructor(private readonly prisma: PrismaService) {}
 
   private parseDateFilter(startDate?: string, endDate?: string) {
-    const where: any = { status: 'COLLECTED' };
-    
+    const where: Prisma.PaymentWhereInput = { status: 'COLLECTED' };
+
     if (startDate || endDate) {
-      where.createdAt = {};
+      const createdAtFilter: Prisma.DateTimeFilter = {};
       if (startDate) {
-        where.createdAt.gte = new Date(startDate);
+        createdAtFilter.gte = new Date(startDate);
       }
       if (endDate) {
         // To include the entire end date, add 1 day if it's a simple YYYY-MM-DD
         const end = new Date(endDate);
-        if (endDate.length === 10) { // basic YYYY-MM-DD
+        if (endDate.length === 10) {
+          // basic YYYY-MM-DD
           end.setDate(end.getDate() + 1);
         }
-        where.createdAt.lt = end;
+        createdAtFilter.lt = end;
       }
+      where.createdAt = createdAtFilter;
     }
-    
+
     return where;
   }
 
@@ -34,7 +38,7 @@ export class RevenueService {
       where,
     });
 
-    return { totalRevenue: result._sum.amount || 0 };
+    return { totalRevenue: (result._sum.amount || 0) / 100 };
   }
 
   async getDailyRevenue(startDate?: string, endDate?: string) {
@@ -57,7 +61,7 @@ export class RevenueService {
 
     const result = Array.from(dailyMap.entries()).map(([date, revenue]) => ({
       date,
-      revenue,
+      revenue: revenue / 100,
     }));
 
     return result;

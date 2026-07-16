@@ -16,7 +16,7 @@ export class SyncService {
   async runSync<ExternalType, InternalType>(
     provider: IntegrationProvider<ExternalType>,
     normalizer: Normalizer<ExternalType, InternalType>,
-    saveToDb: (data: InternalType) => Promise<any>
+    saveToDb: (data: InternalType) => Promise<unknown>,
   ) {
     const sourceName = provider.getName();
     this.logger.log(`Starting sync for ${sourceName}`);
@@ -37,19 +37,33 @@ export class SyncService {
 
     try {
       while (hasMore) {
-        let result;
+        let result: Awaited<ReturnType<typeof provider.fetchData>>;
         try {
           result = await provider.fetchData(currentCursor || undefined);
-        } catch (error: any) {
-          this.logger.warn(`Incremental fetch failed for ${sourceName}. Attempting full sync fallback. Error: ${error.message}`);
-          currentCursor = null; 
+        } catch (err: unknown) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          
+          if (error.message.includes('429') || error.message.includes('503') || error.message.includes('504')) {
+            this.logger.warn(`Rate limit or server error encountered for ${sourceName}. Aborting sync for retry.`);
+            throw error;
+          }
+
+          this.logger.warn(
+            `Incremental fetch failed for ${sourceName}. Attempting full sync fallback. Error: ${error.message}`,
+          );
+          currentCursor = null;
           result = await provider.fetchData();
         }
 
-        for (const item of result.data) {
-          const normalized = normalizer.normalize(item);
-          await saveToDb(normalized);
-          recordsProcessed++;
+        const batchSize = 50;
+        for (let i = 0; i < result.data.length; i += batchSize) {
+          const batch = result.data.slice(i, i + batchSize);
+          const promises = batch.map(async (item) => {
+            const normalized = normalizer.normalize(item);
+            await saveToDb(normalized);
+          });
+          await Promise.all(promises);
+          recordsProcessed += batch.length;
         }
 
         currentCursor = result.nextCursor || null;
@@ -77,11 +91,14 @@ export class SyncService {
         },
       });
 
-      this.logger.log(`Sync completed for ${sourceName}. Processed ${recordsProcessed} records.`);
+      this.logger.log(
+        `Sync completed for ${sourceName}. Processed ${recordsProcessed} records.`,
+      );
       return { source: sourceName, status: 'SUCCESS', recordsProcessed };
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       this.logger.error(`Sync failed for ${sourceName}`, error.stack);
-      
+
       await this.prisma.syncState.update({
         where: { source: sourceName },
         data: { status: 'FAILED' },
@@ -96,7 +113,12 @@ export class SyncService {
         },
       });
 
-      return { source: sourceName, status: 'FAILED', recordsProcessed, error: error.message };
+      return {
+        source: sourceName,
+        status: 'FAILED',
+        recordsProcessed,
+        error: error.message,
+      };
     }
   }
 }

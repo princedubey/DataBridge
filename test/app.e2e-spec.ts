@@ -17,9 +17,7 @@ describe('AppController (e2e)', () => {
   });
 
   it('/metrics/revenue (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/metrics/revenue')
-      .expect(200);
+    return request(app.getHttpServer()).get('/metrics/revenue').expect(200);
   });
 
   afterEach(async () => {

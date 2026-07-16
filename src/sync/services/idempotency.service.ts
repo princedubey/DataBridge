@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class IdempotencyService {
@@ -10,7 +11,7 @@ export class IdempotencyService {
   /**
    * Upserts a customer record ensuring idempotency.
    */
-  async upsertCustomer(data: any) {
+  async upsertCustomer(data: Prisma.CustomerCreateInput) {
     return this.prisma.customer.upsert({
       where: { externalId: data.externalId },
       update: data,
@@ -21,7 +22,7 @@ export class IdempotencyService {
   /**
    * Upserts an event record ensuring idempotency.
    */
-  async upsertEvent(data: any) {
+  async upsertEvent(data: Prisma.EventCreateInput) {
     return this.prisma.event.upsert({
       where: { externalId: data.externalId },
       update: data,
@@ -32,7 +33,7 @@ export class IdempotencyService {
   /**
    * Upserts a payment record ensuring idempotency.
    */
-  async upsertPayment(data: any) {
+  async upsertPayment(data: Prisma.PaymentCreateInput) {
     return this.prisma.payment.upsert({
       where: { externalId: data.externalId },
       update: data,
