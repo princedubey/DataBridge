@@ -17,11 +17,10 @@ describe('RevenueService', () => {
               aggregate: jest
                 .fn()
                 .mockResolvedValue({ _sum: { amount: 50000 } }),
-              findMany: jest.fn().mockResolvedValue([
-                { amount: 10000, createdAt: new Date('2026-07-01T12:00:00Z') },
-                { amount: 40000, createdAt: new Date('2026-07-01T15:00:00Z') },
-              ]),
             },
+            $queryRaw: jest.fn().mockResolvedValue([
+              { date: '2026-07-01', revenue: BigInt(50000) },
+            ]),
           },
         },
       ],
@@ -44,6 +43,6 @@ describe('RevenueService', () => {
   it('should calculate daily revenue', async () => {
     const result = await service.getDailyRevenue();
     expect(result).toEqual([{ date: '2026-07-01', revenue: 500 }]);
-    expect(prisma.payment.findMany).toHaveBeenCalled();
+    expect(prisma.$queryRaw).toHaveBeenCalled();
   });
 });

@@ -54,7 +54,7 @@ describe('StripeConnectorService', () => {
       has_more: false,
     });
 
-    const result = await service.fetchData('2023-01-01T00:00:00Z|pi_456|2023-01-02T00:00:00Z');
+    const result = await service.fetchData('1672531200|null|pi_456');
 
     expect(result.data.length).toBe(0);
     expect(result.hasMore).toBe(false);

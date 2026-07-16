@@ -51,7 +51,7 @@ export class HubspotConnectorService implements IntegrationProvider<SimplePublic
       limit,
       properties,
       after: afterToken,
-      sorts: [{ propertyName: 'lastmodifieddate', direction: 'ASCENDING' }],
+      sorts: ['lastmodifieddate'],
     };
 
     if (originalSyncTimestamp) {
@@ -61,7 +61,7 @@ export class HubspotConnectorService implements IntegrationProvider<SimplePublic
           filters: [
             {
               propertyName: 'lastmodifieddate',
-              operator: 'GTE',
+              operator: 'GTE' as any,
               value: timestamp.toString(),
             },
           ],

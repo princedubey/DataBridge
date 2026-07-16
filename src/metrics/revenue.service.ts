@@ -42,28 +42,34 @@ export class RevenueService {
   }
 
   async getDailyRevenue(startDate?: string, endDate?: string) {
-    const where = this.parseDateFilter(startDate, endDate);
+    const filters: Prisma.Sql[] = [Prisma.sql`"status" = 'COLLECTED'`];
 
-    const payments = await this.prisma.payment.findMany({
-      where,
-      select: { amount: true, createdAt: true },
-      orderBy: { createdAt: 'asc' },
-    });
-
-    const dailyMap = new Map<string, number>();
-
-    for (const payment of payments) {
-      // Group by YYYY-MM-DD
-      const dateString = payment.createdAt.toISOString().split('T')[0];
-      const current = dailyMap.get(dateString) || 0;
-      dailyMap.set(dateString, current + payment.amount);
+    if (startDate) {
+      filters.push(Prisma.sql`"createdAt" >= ${new Date(startDate)}`);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      if (endDate.length === 10) {
+        end.setDate(end.getDate() + 1);
+      }
+      filters.push(Prisma.sql`"createdAt" < ${end}`);
     }
 
-    const result = Array.from(dailyMap.entries()).map(([date, revenue]) => ({
-      date,
-      revenue: revenue / 100,
-    }));
+    const whereClause = Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}`;
 
-    return result;
+    const result = await this.prisma.$queryRaw<{ date: string; revenue: number | bigint }[]>`
+      SELECT 
+        TO_CHAR("createdAt", 'YYYY-MM-DD') as date,
+        SUM(amount) as revenue
+      FROM "Payment"
+      ${whereClause}
+      GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+      ORDER BY date ASC
+    `;
+
+    return result.map(row => ({
+      date: row.date,
+      revenue: Number(row.revenue) / 100,
+    }));
   }
 }

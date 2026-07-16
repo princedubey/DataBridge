@@ -45,44 +45,65 @@ export class IdempotencyService {
    * Batch upserts customer records using a Prisma transaction.
    */
   async upsertCustomers(data: Prisma.CustomerCreateInput[]) {
-    return this.prisma.$transaction(
-      data.map((item) =>
-        this.prisma.customer.upsert({
-          where: { externalId: item.externalId },
-          update: item,
-          create: item,
-        }),
-      ),
-    );
+    const CHUNK_SIZE = 20;
+    const results: any[] = [];
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      const res = await this.prisma.$transaction(
+        chunk.map((item) =>
+          this.prisma.customer.upsert({
+            where: { externalId: item.externalId },
+            update: item,
+            create: item,
+          }),
+        ),
+      );
+      results.push(...res);
+    }
+    return results;
   }
 
   /**
    * Batch upserts event records using a Prisma transaction.
    */
   async upsertEvents(data: Prisma.EventCreateInput[]) {
-    return this.prisma.$transaction(
-      data.map((item) =>
-        this.prisma.event.upsert({
-          where: { externalId: item.externalId },
-          update: item,
-          create: item,
-        }),
-      ),
-    );
+    const CHUNK_SIZE = 20;
+    const results: any[] = [];
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      const res = await this.prisma.$transaction(
+        chunk.map((item) =>
+          this.prisma.event.upsert({
+            where: { externalId: item.externalId },
+            update: item,
+            create: item,
+          }),
+        ),
+      );
+      results.push(...res);
+    }
+    return results;
   }
 
   /**
    * Batch upserts payment records using a Prisma transaction.
    */
   async upsertPayments(data: Prisma.PaymentCreateInput[]) {
-    return this.prisma.$transaction(
-      data.map((item) =>
-        this.prisma.payment.upsert({
-          where: { externalId: item.externalId },
-          update: item,
-          create: item,
-        }),
-      ),
-    );
+    const CHUNK_SIZE = 20;
+    const results: any[] = [];
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      const res = await this.prisma.$transaction(
+        chunk.map((item) =>
+          this.prisma.payment.upsert({
+            where: { externalId: item.externalId },
+            update: item,
+            create: item,
+          }),
+        ),
+      );
+      results.push(...res);
+    }
+    return results;
   }
 }
