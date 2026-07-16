@@ -25,37 +25,41 @@ export class AppService {
   }
 
   async triggerAllSyncs() {
-    this.logger.log('Manually triggering all sync operations...');
+    this.logger.log('Manually triggering all sync operations sequentially to prevent saturation...');
 
-    // We run these concurrently. The SyncService catches and isolates errors internally
-    // so if Stripe fails, HubSpot and GCal still continue without crashing the whole run.
-    const results = await Promise.allSettled([
-      this.syncService.runSync(
+    const tasks = [
+      () => this.syncService.runSync(
         this.stripeConnector,
         new StripeNormalizer(),
-        async (data) => this.idempotencyService.upsertPayment(data),
+        async (data) => this.idempotencyService.upsertPayments(data),
       ),
-      this.syncService.runSync(
+      () => this.syncService.runSync(
         this.hubspotConnector,
         new HubSpotNormalizer(),
-        async (data) => this.idempotencyService.upsertCustomer(data),
+        async (data) => this.idempotencyService.upsertCustomers(data),
       ),
-      this.syncService.runSync(
+      () => this.syncService.runSync(
         this.gcalConnector,
         new GcalNormalizer(),
-        async (data) => this.idempotencyService.upsertEvent(data),
+        async (data) => this.idempotencyService.upsertEvents(data),
       ),
-    ]);
+    ];
 
-    const syncStatuses = results.map((r) =>
-      r.status === 'fulfilled'
-        ? r.value
-        : {
-            source: 'unknown',
-            status: 'CRITICAL_ERROR',
-            error: String(r.reason),
-          },
-    );
+    const syncStatuses: Array<{ source: string; status: string; recordsProcessed?: number; error?: string }> = [];
+    for (const task of tasks) {
+      try {
+        const result = await task();
+        syncStatuses.push(result);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        syncStatuses.push({
+          source: 'unknown',
+          status: 'CRITICAL_ERROR',
+          error: error.message,
+        });
+      }
+    }
+
     this.logger.log(
       `Sync operations completed. Statuses: ${JSON.stringify(syncStatuses)}`,
     );

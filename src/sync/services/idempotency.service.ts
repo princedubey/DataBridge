@@ -40,4 +40,49 @@ export class IdempotencyService {
       create: data,
     });
   }
+
+  /**
+   * Batch upserts customer records using a Prisma transaction.
+   */
+  async upsertCustomers(data: Prisma.CustomerCreateInput[]) {
+    return this.prisma.$transaction(
+      data.map((item) =>
+        this.prisma.customer.upsert({
+          where: { externalId: item.externalId },
+          update: item,
+          create: item,
+        }),
+      ),
+    );
+  }
+
+  /**
+   * Batch upserts event records using a Prisma transaction.
+   */
+  async upsertEvents(data: Prisma.EventCreateInput[]) {
+    return this.prisma.$transaction(
+      data.map((item) =>
+        this.prisma.event.upsert({
+          where: { externalId: item.externalId },
+          update: item,
+          create: item,
+        }),
+      ),
+    );
+  }
+
+  /**
+   * Batch upserts payment records using a Prisma transaction.
+   */
+  async upsertPayments(data: Prisma.PaymentCreateInput[]) {
+    return this.prisma.$transaction(
+      data.map((item) =>
+        this.prisma.payment.upsert({
+          where: { externalId: item.externalId },
+          update: item,
+          create: item,
+        }),
+      ),
+    );
+  }
 }

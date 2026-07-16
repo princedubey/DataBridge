@@ -65,16 +65,10 @@ export class GcalConnectorService implements IntegrationProvider<calendar_v3.Sch
     if (response.data.nextPageToken) {
       nextCursor = `pageToken:${response.data.nextPageToken}`;
       hasMore = true;
-    } else if (data.length > 0) {
-      // Find the max updated time
-      const maxUpdated = data.reduce((max, event) => {
-        const updated = new Date(event.updated || 0).getTime();
-        return updated > max ? updated : max;
-      }, 0);
-
-      if (maxUpdated > 0) {
-        nextCursor = new Date(maxUpdated).toISOString();
-      }
+    } else {
+      // End of sync run. Save the current timestamp to fetch only future updates.
+      nextCursor = new Date().toISOString();
+      hasMore = false;
     }
 
     return {
