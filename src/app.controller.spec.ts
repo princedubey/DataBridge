@@ -9,11 +9,16 @@ import { GcalConnectorService } from './integrations/google-calendar/gcal-connec
 
 describe('AppController', () => {
   let appController: AppController;
+  let appService: AppService;
 
   beforeEach(async () => {
     const mockSyncService = { runSync: jest.fn() };
-    const mockIdempotencyService = { upsertPayment: jest.fn(), upsertCustomer: jest.fn(), upsertEvent: jest.fn() };
-    
+    const mockIdempotencyService = {
+      upsertPayment: jest.fn(),
+      upsertCustomer: jest.fn(),
+      upsertEvent: jest.fn(),
+    };
+
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
@@ -27,13 +32,15 @@ describe('AppController', () => {
     }).compile();
 
     appController = app.get<AppController>(AppController);
+    appService = app.get<AppService>(AppService);
   });
 
   describe('triggerSync', () => {
     it('should call triggerAllSyncs', async () => {
-      // Mock the appService on the controller as we didn't export the module
-      const appService = (appController as any).appService;
-      const mockResult = { message: 'Sync operations completed', results: [] };
+      const mockResult = {
+        message: 'Sync operations completed',
+        results: [] as any[],
+      };
       jest.spyOn(appService, 'triggerAllSyncs').mockResolvedValue(mockResult);
 
       expect(await appController.triggerSync()).toBe(mockResult);

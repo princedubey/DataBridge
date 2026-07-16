@@ -12,8 +12,12 @@ describe('RevenueController', () => {
         {
           provide: RevenueService,
           useValue: {
-            getTotalRevenue: jest.fn().mockResolvedValue({ totalRevenue: 50000 }),
-            getDailyRevenue: jest.fn().mockResolvedValue([{ date: '2026-07-01', revenue: 50000 }]),
+            getTotalRevenue: jest
+              .fn()
+              .mockResolvedValue({ totalRevenue: 50000 }),
+            getDailyRevenue: jest
+              .fn()
+              .mockResolvedValue([{ date: '2026-07-01', revenue: 50000 }]),
           },
         },
       ],

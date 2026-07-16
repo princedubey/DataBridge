@@ -26,35 +26,43 @@ export class AppService {
 
   async triggerAllSyncs() {
     this.logger.log('Manually triggering all sync operations...');
-    
-    // We run these concurrently. The SyncService catches and isolates errors internally 
+
+    // We run these concurrently. The SyncService catches and isolates errors internally
     // so if Stripe fails, HubSpot and GCal still continue without crashing the whole run.
     const results = await Promise.allSettled([
       this.syncService.runSync(
         this.stripeConnector,
         new StripeNormalizer(),
-        async (data) => this.idempotencyService.upsertPayment(data)
+        async (data) => this.idempotencyService.upsertPayment(data),
       ),
       this.syncService.runSync(
         this.hubspotConnector,
         new HubSpotNormalizer(),
-        async (data) => this.idempotencyService.upsertCustomer(data)
+        async (data) => this.idempotencyService.upsertCustomer(data),
       ),
       this.syncService.runSync(
         this.gcalConnector,
         new GcalNormalizer(),
-        async (data) => this.idempotencyService.upsertEvent(data)
-      )
+        async (data) => this.idempotencyService.upsertEvent(data),
+      ),
     ]);
 
-    const syncStatuses = results.map(r => 
-      r.status === 'fulfilled' ? r.value : { source: 'unknown', status: 'CRITICAL_ERROR', error: String(r.reason) }
+    const syncStatuses = results.map((r) =>
+      r.status === 'fulfilled'
+        ? r.value
+        : {
+            source: 'unknown',
+            status: 'CRITICAL_ERROR',
+            error: String(r.reason),
+          },
     );
-    this.logger.log(`Sync operations completed. Statuses: ${JSON.stringify(syncStatuses)}`);
-    
+    this.logger.log(
+      `Sync operations completed. Statuses: ${JSON.stringify(syncStatuses)}`,
+    );
+
     return {
       message: 'Sync operations completed',
-      results: syncStatuses
+      results: syncStatuses,
     };
   }
 }

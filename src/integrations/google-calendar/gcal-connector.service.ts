@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IntegrationProvider, SyncResult } from '../../sync/interfaces/integration-provider.interface';
+import {
+  IntegrationProvider,
+  SyncResult,
+} from '../../sync/interfaces/integration-provider.interface';
 import { google, calendar_v3 } from 'googleapis';
 
 @Injectable()
@@ -10,9 +13,11 @@ export class GcalConnectorService implements IntegrationProvider<calendar_v3.Sch
   constructor() {
     const auth = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID || 'client_id',
-      process.env.GOOGLE_CLIENT_SECRET || 'client_secret'
+      process.env.GOOGLE_CLIENT_SECRET || 'client_secret',
     );
-    auth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN || 'refresh_token' });
+    auth.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN || 'refresh_token',
+    });
     this.calendar = google.calendar({ version: 'v3', auth });
   }
 
@@ -20,19 +25,23 @@ export class GcalConnectorService implements IntegrationProvider<calendar_v3.Sch
     return 'google-calendar';
   }
 
-  async fetchData(cursor?: string): Promise<SyncResult<calendar_v3.Schema$Event>> {
-    this.logger.debug(`Fetching Google Calendar events from cursor: ${cursor || 'start'}`);
+  async fetchData(
+    cursor?: string,
+  ): Promise<SyncResult<calendar_v3.Schema$Event>> {
+    this.logger.debug(
+      `Fetching Google Calendar events from cursor: ${cursor || 'start'}`,
+    );
 
     const maxResults = 100;
-    
+
     // We can use updatedMin for incremental fetching based on modified time.
     let updatedMin: string | undefined = undefined;
-    
+
     // Check if cursor is a date (updatedMin requires RFC3339 timestamp)
     if (cursor && !cursor.startsWith('pageToken:')) {
       updatedMin = new Date(cursor).toISOString();
     }
-    
+
     // Page token processing
     let pageToken: string | undefined = undefined;
     if (cursor && cursor.startsWith('pageToken:')) {
@@ -49,7 +58,7 @@ export class GcalConnectorService implements IntegrationProvider<calendar_v3.Sch
     });
 
     const data = response.data.items || [];
-    
+
     let nextCursor: string | null = null;
     let hasMore = false;
 
@@ -62,7 +71,7 @@ export class GcalConnectorService implements IntegrationProvider<calendar_v3.Sch
         const updated = new Date(event.updated || 0).getTime();
         return updated > max ? updated : max;
       }, 0);
-      
+
       if (maxUpdated > 0) {
         nextCursor = new Date(maxUpdated).toISOString();
       }

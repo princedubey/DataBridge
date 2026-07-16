@@ -34,14 +34,18 @@ describe('AppService', () => {
     // Mock runSync to resolve successfully
     (syncService.runSync as jest.Mock).mockResolvedValueOnce(undefined);
     (syncService.runSync as jest.Mock).mockResolvedValueOnce(undefined);
-    (syncService.runSync as jest.Mock).mockRejectedValueOnce(new Error('Sync failed'));
+    (syncService.runSync as jest.Mock).mockRejectedValueOnce(
+      new Error('Sync failed'),
+    );
 
     const result = await appService.triggerAllSyncs();
-    
+
     expect(syncService.runSync).toHaveBeenCalledTimes(3);
-    
+
     // Promise.allSettled ensures it doesn't throw, and returns statuses
-    const hasError = result.results.some(r => r && r.status === 'CRITICAL_ERROR');
+    const hasError = result.results.some(
+      (r) => r && r.status === 'CRITICAL_ERROR',
+    );
     expect(hasError).toBe(true);
   });
 });
