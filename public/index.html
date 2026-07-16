@@ -274,6 +274,14 @@
       }).format(cents / 100);
     };
 
+    const formatOutput = (data) => {
+      const str = JSON.stringify(data, null, 2);
+      if (str.length > 3000) {
+        return str.substring(0, 3000) + '\n\n... [TRUNCATED ' + (str.length - 3000) + ' characters for UI performance]';
+      }
+      return str;
+    };
+
     async function triggerSync() {
       const btn = document.getElementById('btn-sync');
       const resultBox = document.getElementById('sync-result');
@@ -287,10 +295,10 @@
         const data = await response.json();
         
         if (response.ok) {
-          resultBox.textContent = JSON.stringify(data, null, 2);
+          resultBox.textContent = formatOutput(data);
           resultBox.classList.add('success');
         } else {
-          resultBox.textContent = JSON.stringify(data, null, 2);
+          resultBox.textContent = formatOutput(data);
           resultBox.classList.add('error');
         }
       } catch (err) {
@@ -316,11 +324,11 @@
         
         if (response.ok) {
           display.textContent = formatCurrency(data.totalRevenue || 0);
-          rawBox.textContent = JSON.stringify(data, null, 2);
+          rawBox.textContent = formatOutput(data);
           rawBox.classList.add('success');
         } else {
           display.textContent = 'ERR';
-          rawBox.textContent = JSON.stringify(data, null, 2);
+          rawBox.textContent = formatOutput(data);
           rawBox.classList.add('error');
         }
       } catch (err) {
@@ -345,10 +353,10 @@
         const data = await response.json();
         
         if (response.ok) {
-          rawBox.textContent = JSON.stringify(data, null, 2);
+          rawBox.textContent = formatOutput(data);
           rawBox.classList.add('success');
         } else {
-          rawBox.textContent = JSON.stringify(data, null, 2);
+          rawBox.textContent = formatOutput(data);
           rawBox.classList.add('error');
         }
       } catch (err) {
@@ -358,10 +366,6 @@
         btn.classList.remove('loading');
       }
     }
-    
-    // Auto fetch metrics on load
-    fetchMetrics();
-    fetchDailyMetrics();
   </script>
 </body>
 </html>

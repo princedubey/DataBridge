@@ -61,28 +61,19 @@ export class StripeConnectorService implements IntegrationProvider<Stripe.Paymen
     let nextCursor: string | null = null;
 
     if (data.length > 0) {
-      const currentBatchMax = Math.max(...data.map((p) => p.created));
-      const currentBatchMaxIso = new Date(currentBatchMax * 1000).toISOString();
-
-      // Update maxSeenSoFar if this batch has a newer record
-      if (
-        !maxSeenSoFar ||
-        new Date(currentBatchMaxIso) > new Date(maxSeenSoFar)
-      ) {
-        maxSeenSoFar = currentBatchMaxIso;
-      }
-
       if (response.has_more) {
         // Pagination within the same sync run
         const lastId = data[data.length - 1].id;
-        nextCursor = `${originalSyncTimestamp || 'null'}|${lastId}|${maxSeenSoFar}`;
+        nextCursor = `${originalSyncTimestamp || 'null'}|${lastId}`;
       } else {
-        // End of sync run. The next sync should start from the absolute max timestamp we found.
-        nextCursor = maxSeenSoFar;
+        // End of sync run. The next sync should start from the time this run was initiated.
+        // We use Math.floor(Date.now() / 1000) instead of maxSeenSoFar to avoid infinite loops 
+        // fetching the exact same-second records on every scheduled run.
+        nextCursor = new Date().toISOString();
       }
     } else {
-      // No data returned, so no changes to cursor for next run
-      nextCursor = originalSyncTimestamp || null;
+      // No data returned, update cursor to current time to avoid re-fetching old empty windows
+      nextCursor = new Date().toISOString();
     }
 
     return {

@@ -16,7 +16,7 @@ export class SyncService {
   async runSync<ExternalType, InternalType>(
     provider: IntegrationProvider<ExternalType>,
     normalizer: Normalizer<ExternalType, InternalType>,
-    saveToDb: (data: InternalType) => Promise<unknown>,
+    saveToDb: (data: InternalType[]) => Promise<unknown>,
   ) {
     const sourceName = provider.getName();
     this.logger.log(`Starting sync for ${sourceName}`);
@@ -42,42 +42,27 @@ export class SyncService {
           result = await provider.fetchData(currentCursor || undefined);
         } catch (err: unknown) {
           const error = err instanceof Error ? err : new Error(String(err));
-          
-          if (error.message.includes('429') || error.message.includes('503') || error.message.includes('504')) {
-            this.logger.warn(`Rate limit or server error encountered for ${sourceName}. Aborting sync for retry.`);
-            throw error;
-          }
-
-          this.logger.warn(
-            `Incremental fetch failed for ${sourceName}. Attempting full sync fallback. Error: ${error.message}`,
-          );
-          currentCursor = null;
-          result = await provider.fetchData();
+          this.logger.warn(`Fetch error encountered for ${sourceName}. Aborting sync for retry. Error: ${error.message}`);
+          throw error;
         }
 
-        const batchSize = 50;
+        const batchSize = 100;
         for (let i = 0; i < result.data.length; i += batchSize) {
           const batch = result.data.slice(i, i + batchSize);
-          const promises = batch.map(async (item) => {
-            const normalized = normalizer.normalize(item);
-            await saveToDb(normalized);
-          });
-          await Promise.all(promises);
+          const normalizedBatch = batch.map((item) => normalizer.normalize(item));
+          
+          await saveToDb(normalizedBatch);
           recordsProcessed += batch.length;
         }
 
         currentCursor = result.nextCursor || null;
         hasMore = result.hasMore;
-
-        await this.prisma.syncState.update({
-          where: { source: sourceName },
-          data: { cursor: currentCursor },
-        });
       }
 
       await this.prisma.syncState.update({
         where: { source: sourceName },
         data: {
+          cursor: currentCursor, // Update only at the end of a successful run
           lastExecution: new Date(),
           status: 'SUCCESS',
         },
@@ -101,7 +86,7 @@ export class SyncService {
 
       await this.prisma.syncState.update({
         where: { source: sourceName },
-        data: { status: 'FAILED' },
+        data: { status: 'FAILED' }, // Do not wipe cursor, just mark FAILED
       });
 
       await this.prisma.syncLog.create({
@@ -122,3 +107,4 @@ export class SyncService {
     }
   }
 }
+

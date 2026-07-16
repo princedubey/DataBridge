@@ -46,7 +46,7 @@ describe('SyncService', () => {
     jest.clearAllMocks();
   });
 
-  it('should run sync successfully', async () => {
+  it('should run sync successfully with batching', async () => {
     mockPrisma.syncState.findUnique.mockResolvedValue({ source: 'TEST_SOURCE', cursor: null });
     (mockProvider.fetchData as jest.Mock).mockResolvedValue({
       data: [{ id: 1 }, { id: 2 }],
@@ -58,41 +58,22 @@ describe('SyncService', () => {
 
     expect(result.status).toBe('SUCCESS');
     expect(result.recordsProcessed).toBe(2);
-    expect(mockSaveToDb).toHaveBeenCalledTimes(2);
+    // Called once with an array of 2 items
+    expect(mockSaveToDb).toHaveBeenCalledTimes(1);
+    expect(mockSaveToDb).toHaveBeenCalledWith([{ id: 1 }, { id: 2 }]);
   });
 
-  it('should fallback to full sync on cursor error', async () => {
+  it('should abort and throw on cursor error without falling back', async () => {
     mockPrisma.syncState.findUnique.mockResolvedValue({ source: 'TEST_SOURCE', cursor: 'old_cursor' });
     
-    // First call fails with generic error, second call (full sync) succeeds
     (mockProvider.fetchData as jest.Mock)
-      .mockRejectedValueOnce(new Error('Cursor expired'))
-      .mockResolvedValueOnce({
-        data: [{ id: 3 }],
-        hasMore: false,
-        nextCursor: null,
-      });
+      .mockRejectedValueOnce(new Error('Cursor expired'));
 
     const result = await service.runSync(mockProvider, mockNormalizer, mockSaveToDb);
 
-    expect(result.status).toBe('SUCCESS');
-    expect(result.recordsProcessed).toBe(1);
-    expect(mockProvider.fetchData).toHaveBeenCalledTimes(2);
-    expect(mockProvider.fetchData).toHaveBeenNthCalledWith(1, 'old_cursor');
-    expect(mockProvider.fetchData).toHaveBeenNthCalledWith(2); // no cursor
-  });
-
-  it('should abort and throw on rate limit error 429', async () => {
-    mockPrisma.syncState.findUnique.mockResolvedValue({ source: 'TEST_SOURCE', cursor: 'old_cursor' });
-    
-    (mockProvider.fetchData as jest.Mock).mockRejectedValueOnce(new Error('429 Too Many Requests'));
-
-    const result = await service.runSync(mockProvider, mockNormalizer, mockSaveToDb);
-
-    // It should catch the error and log FAILED
     expect(result.status).toBe('FAILED');
-    expect(result.error).toContain('429 Too Many Requests');
-    // Ensure it did not attempt a fallback
-    expect(mockProvider.fetchData).toHaveBeenCalledTimes(1);
+    expect(mockProvider.fetchData).toHaveBeenCalledTimes(1); // No full fallback
+    expect(mockProvider.fetchData).toHaveBeenNthCalledWith(1, 'old_cursor');
   });
+
 });
